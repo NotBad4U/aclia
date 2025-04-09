@@ -219,17 +219,9 @@ induction
     admit
   }
   {
-    // simplify norm;
-    assume h tl H H2;
-    simplify;
-    set aliensX ≔ aliens x;
-    set aliensY ≔ aliens y;
-    type (head toto (aliensX ++ aliensY)) ⸬ (behead (aliensX ++ aliensY));
-    have G: π ((aliensX ++ aliensY) = ((head toto (aliensX ++ aliensY)) ⸬ (behead (aliensX ++ aliensY)))) {admit};
-    rewrite G;
-    simplify;
+    //TODO: what to do with sort (aliens x ++ aliens y) ?
   }
-}  
+}
 admitted;
 
 symbol eta_prod [a b] (x:τ(a × b)): π(x = (x ₁) ‚ (x ₂));
