@@ -1,6 +1,6 @@
-require open Stdlib.Prop;
-require open Stdlib.FOL;
-require open Stdlib.Set;
+require open aclia.Prop;
+require open aclia.FOL;
+require open aclia.Set;
 
 notation ¬ prefix 35;
 

@@ -1,7 +1,7 @@
 
-require Stdlib.Nat as Nat;
-open Stdlib.Nat;
-require open Stdlib.Pos Stdlib.Z Stdlib.Prod Stdlib.Set Stdlib.List Stdlib.Eq Stdlib.Prop Stdlib.FOL Stdlib.Bool Stdlib.Comp;
+require aclia.Nat as Nat;
+open aclia.Nat;
+require open aclia.Pos aclia.Z aclia.Prod aclia.Set aclia.List aclia.Eq aclia.Prop aclia.FOL aclia.Bool aclia.Comp;
 
 // type for arithmetic expressions
 

@@ -1,10 +1,10 @@
-require open Stdlib.Prop;
-require open Stdlib.Set;
-require open Stdlib.Eq;
-require open Stdlib.Z;
+require open aclia.Prop;
+require open aclia.Set;
+require open aclia.Eq;
+require open aclia.Z;
 require open aclia.Classic;
 require open aclia.Alethe;
-require open Stdlib.List;
+require open aclia.List;
 require open aclia.lia;
 
 symbol p_0_0 : τ (int);

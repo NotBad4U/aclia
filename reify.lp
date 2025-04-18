@@ -1,4 +1,4 @@
-require open Stdlib.Nat Stdlib.Pos Stdlib.Z Stdlib.Prod Stdlib.Set Stdlib.List Stdlib.Eq Stdlib.Prop Stdlib.Bool Stdlib.Comp;
+require open aclia.Nat aclia.Pos aclia.Z aclia.Prod aclia.Set aclia.List aclia.Eq aclia.Prop aclia.Bool aclia.Comp;
 
 // type for arithmetic expressions
 

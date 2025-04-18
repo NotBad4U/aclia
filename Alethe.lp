@@ -1,9 +1,9 @@
-require open Stdlib.Prop;
-require open Stdlib.FOL;
-require open Stdlib.Set;
-require open Stdlib.Eq;
-require open Stdlib.Bool;
-require open Stdlib.Nat;
+require open aclia.Prop;
+require open aclia.FOL;
+require open aclia.Set;
+require open aclia.Eq;
+require open aclia.Bool;
+require open aclia.Nat;
 require open aclia.Classic;
 
 notation ¬ prefix 35;
@@ -1351,19 +1351,19 @@ rule eq $x $x ↪ true
 with eq $x $y ↪ false;
 
 sequential symbol In_∧ᶜ: Prop → Prop → 𝔹;
-rule In_∧ᶜ $x ($h ∧ᶜ $tl) ↪ (eq $x $h)  Stdlib.Bool.or (In_∧ᶜ $x $tl)
+rule In_∧ᶜ $x ($h ∧ᶜ $tl) ↪ (eq $x $h)  aclia.Bool.or (In_∧ᶜ $x $tl)
 with In_∧ᶜ $x ⊤ ↪ false;
 
 sequential symbol In_∨ᶜ: Prop → Prop → 𝔹;
-rule In_∨ᶜ $x ($h ∨ᶜ $tl) ↪ (eq $x $h) Stdlib.Bool.or (In_∨ᶜ $x $tl)
+rule In_∨ᶜ $x ($h ∨ᶜ $tl) ↪ (eq $x $h) aclia.Bool.or (In_∨ᶜ $x $tl)
 with In_∨ᶜ _ ⊥ ↪ false;
 
 sequential symbol In_∧ᶜ': Prop → Prop → 𝔹;
-rule In_∧ᶜ' $x ($h ∧ᶜ $tl) ↪ (eq $x $h)  Stdlib.Bool.or (In_∧ᶜ' $x $tl)
+rule In_∧ᶜ' $x ($h ∧ᶜ $tl) ↪ (eq $x $h)  aclia.Bool.or (In_∧ᶜ' $x $tl)
 with In_∧ᶜ' $x $h ↪ (eq $x $h);
 
 sequential symbol In_∨ᶜ': Prop → Prop → 𝔹;
-rule In_∨ᶜ' $x ($h ∨ᶜ $tl) ↪ (eq $x $h) Stdlib.Bool.or (In_∨ᶜ' $x $tl)
+rule In_∨ᶜ' $x ($h ∨ᶜ $tl) ↪ (eq $x $h) aclia.Bool.or (In_∨ᶜ' $x $tl)
 with In_∨ᶜ' $x $h ↪ (eq $x $h);
 
 // and_pos: ¬(𝜑1 ∧ … ∧ 𝜑𝑛), 𝜑𝑘
@@ -1792,12 +1792,12 @@ begin
    reflexivity
 end;
 
-opaque symbol and_elim1 [p q : τ bool] : πᶜ (istrue (p Stdlib.Bool.and q)) → πᶜ (istrue p) ≔
+opaque symbol and_elim1 [p q : τ bool] : πᶜ (istrue (p aclia.Bool.and q)) → πᶜ (istrue p) ≔
 begin
   admit
 end;
 
-opaque symbol and_elim2 [p q : τ bool] : πᶜ (istrue (p Stdlib.Bool.and q)) → πᶜ (istrue q) ≔
+opaque symbol and_elim2 [p q : τ bool] : πᶜ (istrue (p aclia.Bool.and q)) → πᶜ (istrue q) ≔
 begin
   admit
 end;
@@ -1886,7 +1886,7 @@ end;
 sequential symbol  ⩦: ℂ → ℂ → 𝔹; notation ⩦ infix 11;
 rule (P $x) ⩦ (P $x) ↪ true
 with (P $x) ⩦ (P $y) ↪ false
-with ($x ⊔ $xs) ⩦ ($y ⊔ $ys) ↪ ($x ⩦ $y) Stdlib.Bool.and ($xs ⩦ $ys)
+with ($x ⊔ $xs) ⩦ ($y ⊔ $ys) ↪ ($x ⩦ $y) aclia.Bool.and ($xs ⩦ $ys)
 with ⬓ ⩦ ⬓ ↪ true
 with ⬓ ⩦ (P _) ↪ false
 with (P _) ⩦ ⬓ ↪ false
@@ -2054,21 +2054,21 @@ have cut:  πᶜ (⟇_to_∨ᶜ_rw (c ⟇ b ⟇ a ⟇ ▩) = ⟇_to_∨ᶜ_rw (a
 refine subst_equiv_clause (c ⟇ b ⟇ a ⟇ ▩) (a ⟇ b ⟇ c ⟇ ▩) cut H;
 end;
 
-// require open Stdlib.List;
+// require open aclia.List;
 
 // symbol not_found: Prop;
 
 // symbol I: ℕ → ℂ;
 
-// symbol reify_cl2: Stdlib.List.𝕃 o → Clause → ℂ;
+// symbol reify_cl2: aclia.List.𝕃 o → Clause → ℂ;
 
 // rule reify_cl2 $varmap ($x ⟇ $xs) ↪ (I (index eq $x $varmap)) ⊔ (reify_cl2 $varmap $xs)
 // with reify_cl2 $varmap ▩ ↪ ⬓
 // ;
 
-// sequential symbol  Eq_ℂ: Stdlib.List.𝕃 o → ℂ → ℂ → 𝔹;
+// sequential symbol  Eq_ℂ: aclia.List.𝕃 o → ℂ → ℂ → 𝔹;
 // rule Eq_ℂ $varmap (I $x) (I $y) ↪ eqn $x $y
-// with Eq_ℂ $varmap ($x ⊔ $xs) ($y ⊔ $ys) ↪ (Eq_ℂ $varmap $x $y) Stdlib.Bool.and (Eq_ℂ $varmap $xs $ys)
+// with Eq_ℂ $varmap ($x ⊔ $xs) ($y ⊔ $ys) ↪ (Eq_ℂ $varmap $x $y) aclia.Bool.and (Eq_ℂ $varmap $xs $ys)
 // with Eq_ℂ $varmap ⬓ ⬓ ↪ true
 // with Eq_ℂ $varmap ⬓ (I _) ↪ false
 // with Eq_ℂ $varmap (I _) ⬓ ↪ false
@@ -2082,7 +2082,7 @@ end;
 //   admit
 // end;
 
-// opaque symbol F_correct_env (varmap: Stdlib.List.𝕃 o) : πᶜ (`∀ᶜ (a: Clause), `∀ᶜ (b: Clause), (istrue (Eq_ℂ varmap (reify_cl2 varmap a) (reify_cl2 varmap b))) ⇒ᶜ (⟇_to_∨ᶜ_rw a = ⟇_to_∨ᶜ_rw b)) ≔
+// opaque symbol F_correct_env (varmap: aclia.List.𝕃 o) : πᶜ (`∀ᶜ (a: Clause), `∀ᶜ (b: Clause), (istrue (Eq_ℂ varmap (reify_cl2 varmap a) (reify_cl2 varmap b))) ⇒ᶜ (⟇_to_∨ᶜ_rw a = ⟇_to_∨ᶜ_rw b)) ≔
 // begin
 //   assume varmap;
 //   apply ind_ℂ (λ u, `∀ᶜ (b: Clause), (istrue (Eq_ℂ varmap (reify_cl2 varmap u) (reify_cl2 varmap b))) ⇒ᶜ (⟇_to_∨ᶜ_rw u = ⟇_to_∨ᶜ_rw b))
