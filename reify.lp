@@ -81,7 +81,7 @@ with rfy $l ($x * Zneg $k) ↪
   mul (Zneg $k) (x ₁) ‚ x ₂
 
 with rfy $l $x ↪
-  case (index _0 $x $l) (λ i, Var i 1 ‚ $l ++ ($x ⸬ □)) (λ i, Var i 1 ‚ $l)
+  case (index _0 $x $l) (λ i, Var i 1 ‚ $l) (λ i, Var i 1 ‚ $l ++ ($x ⸬ □))
 ;
 
 symbol reify ≔ rfy □;
