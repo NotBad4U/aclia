@@ -50,6 +50,8 @@ rule val (Cst $k ‚ _) ↪ $k
 with val (Var $i $k ‚ $l) ↪ (nth not_found $l $i) * $k
 with val (Add $x $y ‚ $l) ↪ val ($x ‚ $l) + val ($y ‚ $l);
 
+symbol wal l x ≔ val (x ‚ l);
+
 // some useful type
 
 constant symbol R : TYPE;
@@ -138,45 +140,65 @@ with compN ($x +1) ($y +1) ↪ compN $x $y;
 
 // normalization of arithmetic expressions
 
-symbol remove0 : G → τ(list g) → τ(list g);
+/*
+symbol merge : τ(list g) → τ(list g);
 
-rule remove0 (Cst 0) $l ↪ $l
-with remove0 (Cst (Zpos $k)) $l ↪ Cst (Zpos $k) ⸬ $l
-with remove0 (Cst (Zneg $k)) $l ↪ Cst (Zneg $k) ⸬ $l
-with remove0 (Var $i 0) $l ↪ $l
-with remove0 (Var $i (Zpos $k)) $l ↪ Var $i (Zpos $k) ⸬ $l
-with remove0 (Var $i (Zneg $k)) $l ↪ Var $i (Zneg $k) ⸬ $l
+rule merge □ ↪ □
+with merge ($x ⸬ □) ↪ $x ⸬ □
+with merge (Cst $k ⸬ Cst $k' ⸬ $l) ↪ merge (Cst ($k + $k') ⸬ $l)
+with merge (Cst $k ⸬ Var $i $ki ⸬ $l) ↪ Cst $k ⸬ merge (Var $i $ki ⸬ $l)
+with merge (Var $i $ki ⸬ Var $j $kj ⸬ $l) ↪
+  case_Comp (compN $i $j)
+            (merge (Var $i ($ki + $kj) ⸬ $l))
+            (Var $i $ki ⸬ merge (Var $j $kj ⸬ $l))
+            (Var $i $ki ⸬ merge (Var $j $kj ⸬ $l))
+;
+*/
+
+symbol remove0 : τ(list g) → τ(list g);
+
+rule remove0 □ ↪ □
+with remove0 (Cst 0 ⸬ $l) ↪ remove0 $l
+with remove0 (Cst (Zpos $k) ⸬ $l) ↪ Cst (Zpos $k) ⸬ remove0 $l
+with remove0 (Cst (Zneg $k) ⸬ $l) ↪ Cst (Zneg $k) ⸬ remove0 $l
+with remove0 (Var $i 0 ⸬ $l) ↪ remove0 $l
+with remove0 (Var $i (Zpos $k) ⸬ $l) ↪ Var $i (Zpos $k) ⸬ remove0 $l
+with remove0 (Var $i (Zneg $k) ⸬ $l) ↪ Var $i (Zneg $k) ⸬ remove0 $l
 ;
 
 symbol insert: G → τ(list g) → τ(list g);
 
-rule insert $x □ ↪ remove0 $x □
-with insert (Cst 0) $l ↪ $l
-with insert (Cst $k) (Cst $k' ⸬ $l) ↪ remove0 (Cst ($k + $k')) $l
-with insert (Cst $k) (Var $i $k' ⸬ $l) ↪ Cst $k ⸬ insert (Var $i $k') $l
+/*
+rule insert (Cst $k) (Cst $k' ⸬ $l) ↪ Cst $k ⸬ Cst $k' ⸬ $l
+with insert (Cst $k) (Var $i $k' ⸬ $l) ↪ Cst $k ⸬ Var $i $k' ⸬ $l
 with insert (Var $i $k) (Cst $k' ⸬ $l) ↪ Cst $k' ⸬ insert (Var $i $k) $l
-with insert (Var $i $k) (Var $j $k' ⸬ $l) ↪
-  case_Comp (compN $i $j)
-            (remove0 (Var $i ($k + $k')) $l)
-            (Var $i $k ⸬ Var $j $k' ⸬ $l)
-            (Var $j $k' ⸬ insert (Var $i $k) $l);
+with insert (Var $i $ki) (Var $j $kj ⸬ $l) ↪
+     case_Comp (compN $i $j)
+            (Var $i $ki ⸬ Var $j $kj ⸬ $l)
+            (Var $i $ki ⸬ Var $j $kj ⸬ $l)
+            (Var $j $kj ⸬ insert (Var $i $ki) $l);
+*/
+
+rule insert (Cst $k) (Cst $k' ⸬ $l) ↪ Cst ($k + $k') ⸬ $l
+with insert (Cst $k) (Var $i $k' ⸬ $l) ↪ Cst $k ⸬ Var $i $k' ⸬ $l
+with insert (Var $i $k) (Cst $k' ⸬ $l) ↪ Cst $k' ⸬ insert (Var $i $k) $l
+with insert (Var $i $ki) (Var $j $kj ⸬ $l) ↪
+     case_Comp (compN $i $j)
+            (Var $i ($ki + $kj) ⸬ $l)
+            (Var $i $ki ⸬ Var $j $kj ⸬ $l)
+            (Var $j $kj ⸬ insert (Var $i $ki) $l);
 
 symbol sort: τ(list g) → τ(list g);
 
 rule sort □ ↪ □
 with sort ($x ⸬ $l) ↪ insert $x (sort $l);
 
-symbol comb: G → τ(list g) → G;
+symbol sum: τ(list g) → τ g;
 
-rule comb $x □ ↪ $x
-with comb $x ($y ⸬ $l) ↪ Add $x (comb $y $l);
+rule sum □ ↪ Cst 0
+with sum ($x ⸬ $l) ↪ Add $x (sum $l);
 
-symbol caseL : τ(list g) → τ g → (τ g → τ(list g) → τ g) → τ g;
-
-rule caseL □ $a _ ↪ $a
-with caseL ($x ⸬ $l) _ $f ↪ $f $x $l;
-
-symbol norm x ≔ caseL (sort (aliens x)) (Cst 0) comb;
+symbol norm x ≔ sum (remove0 (sort (aliens x)));
 
 opaque symbol max_geq m n1 n2 :
   π (istrue ((max n1 n2) Nat.≤ m) ⇒ istrue (n1 Nat.≤ m) ∧ istrue (n2 Nat.≤ m)) ≔

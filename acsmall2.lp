@@ -228,6 +228,8 @@ opaque symbol Hla : πᶜ ((¬ (((p_0_4 + p_1_4 + p_2_4 + p_3_4 + p_4_4 + p_5_4)
     rewrite eta_prod (reify b);
     rewrite left norm_correct (reify a ₁) (reify a ₂);
     rewrite left norm_correct (reify b ₁) (reify b ₂);
+    print;
     simplify;
+    print;
     apply trivial;
 end;
