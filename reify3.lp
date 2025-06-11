@@ -166,6 +166,57 @@ with remove0 (Var $i (Zpos $k) ⸬ $l) ↪ Var $i (Zpos $k) ⸬ remove0 $l
 with remove0 (Var $i (Zneg $k) ⸬ $l) ↪ Var $i (Zneg $k) ⸬ remove0 $l
 ;
 
+symbol sum: τ(list g) → τ g;
+
+rule sum □ ↪ Cst 0
+with sum ($x ⸬ $l) ↪ Add $x (sum $l);
+
+symbol isNotAdd: τ g → τ bool;
+rule isNotAdd (Cst _) ↪ true
+with isNotAdd (Var _ _ ) ↪ true
+with isNotAdd (Add _ _ ) ↪ false;
+
+symbol no_aliens_add : τ(list g) → Prop;
+rule no_aliens_add □ ↪ ⊤
+with no_aliens_add ($g ⸬ $gs) ↪  (isNotAdd $g) ∧ (no_aliens_add $gs);
+
+opaque symbol remove0_correct l gs : π (no_aliens_add gs) →  π (val (sum (remove0 gs) ‚ l) = val (sum gs ‚ l)) ≔
+begin
+  assume l;
+  induction // on l
+  {
+    reflexivity
+  }
+  {
+    induction // on g
+    {
+      // Case Cst k
+      induction 
+      // Case Z0
+      { assume gs IH H;  apply IH;  refine (∧ₑ₂ H) }
+      // Case Zpos
+      { assume c gs IH H; simplify;  rewrite (IH (∧ₑ₂ H)); reflexivity }
+      // Case Zneg
+      { assume c gs IH H; simplify;  rewrite (IH (∧ₑ₂ H)); reflexivity }
+    }
+    {
+      // Case Var i k
+      assume i;
+      induction // on k
+      {assume gs IH H;  apply IH; refine (∧ₑ₂ H)} // Case Z0
+      { assume c gs IH H; simplify;  rewrite (IH (∧ₑ₂ H)); reflexivity } // Case Zpos
+      { assume c gs IH H; simplify;  rewrite (IH (∧ₑ₂ H)); reflexivity } // Case Zneg
+    }
+    {
+      // Case Add g1 g2
+      // That violate the invariant: no_aliens_add gs
+      simplify;
+      assume g1 IHg1 g2 IHg2 gs IHg H;
+      refine ⊥ₑ (∧ₑ₁ H)
+    }
+  }
+end;
+
 symbol insert: G → τ(list g) → τ(list g);
 
 /*
@@ -186,17 +237,100 @@ with insert (Var $i $ki) (Var $j $kj ⸬ $l) ↪
      case_Comp (compN $i $j)
             (Var $i ($ki + $kj) ⸬ $l)
             (Var $i $ki ⸬ Var $j $kj ⸬ $l)
-            (Var $j $kj ⸬ insert (Var $i $ki) $l);
+            (Var $j $kj ⸬ insert (Var $i $ki) $l)
+with insert $x □ ↪ $x ⸬ □;
+
+symbol compN_decides x y : π (compN x y = Eq ⇒ x = y);
+
+symbol ntheq l i k1 k2 :  π ((nth not_found l i * (k1 + k2)) = (nth not_found l i * k1) + (nth not_found l i * k2)) ≔
+begin
+admitted;
+
+symbol insert_correct l gs g : π (no_aliens_add (g ⸬ gs)) → π (val (sum (insert g gs) ‚ l) =  val (g ‚ l) +  val (sum gs ‚ l)) ≔
+begin
+assume l;
+induction
+{ reflexivity }
+{
+  // /assume g' gs IH g Haliens;
+  induction
+  {
+    // Cst k
+    assume k gs IH;
+    induction
+    // Cst k
+    { assume k2 H; simplify; rewrite +_assoc; reflexivity }
+    // Var i j
+    {
+      assume i c H;
+      simplify;
+      have g: π (no_aliens_add (Var i c ⸬ gs)) { 
+        apply ∧ᵢ
+        { refine ∧ₑ₁ H; }
+        { refine ∧ₑ₂ (∧ₑ₂ H); }
+       };
+      rewrite IH (Var i c) g;
+      rewrite left +_assoc k (val (Var i c ‚ l)) (val (sum gs ‚ l));
+      rewrite +_com k;
+      rewrite +_assoc;
+      reflexivity
+    }
+    // Case Add
+    { assume g1 h2 g2 h4 contradiction; refine ⊥ₑ (∧ₑ₁ contradiction) }
+  }
+  {
+    // Case Var i k
+    assume i k gs IH;
+    induction
+    { assume c H; reflexivity }
+    {
+      assume j k2 Haliens;
+      simplify insert;
+      refine ind_Comp (λ u, (compN j i) = u ⇒ val (sum (case_Comp u (Var j (k2 + k) ⸬ gs) (Var j k2 ⸬ (Var i k ⸬ gs)) (Var i k ⸬ insert (Var j k2) gs)) ‚ l) = (val (Var j k2 ‚ l) + val (sum (Var i k ⸬ gs) ‚ l))) _ _ _ (compN j i) _
+      {
+        assume Hi_eq_j;
+        simplify case_Comp;
+        rewrite compN_decides j i Hi_eq_j;
+        simplify;
+        admit
+      }
+      {
+        assume Hcomp;
+        simplify case_Comp;
+        reflexivity
+      }
+      {
+        assume Hcomp;
+        simplify case_Comp;
+        simplify;
+        type IH (Var j k2);
+        have g: π (no_aliens_add (Var j k2 ⸬ gs)) {
+          simplify;
+          apply ∧ᵢ
+          { refine ∧ₑ₁ Haliens }
+          { refine ∧ₑ₂ (∧ₑ₂ Haliens) }
+        };
+        rewrite IH (Var j k2) g;
+        simplify;
+        rewrite left +_assoc (nth not_found l i * k) (nth not_found l j * k2) (val (sum gs ‚ l));
+        rewrite +_com (nth not_found l i * k) (nth not_found l j * k2);
+        rewrite +_assoc;
+        reflexivity
+      }
+      {reflexivity}
+    }
+    { assume g IH1 g' IH2 contradiction; refine ⊥ₑ (∧ₑ₁ contradiction) }
+  }
+  { assume g1  IH g2 IH2 gs H g contradiction; refine ⊥ₑ (∧ₑ₁ (∧ₑ₂ contradiction)); }
+}
+end;
 
 symbol sort: τ(list g) → τ(list g);
 
 rule sort □ ↪ □
 with sort ($x ⸬ $l) ↪ insert $x (sort $l);
 
-symbol sum: τ(list g) → τ g;
-
-rule sum □ ↪ Cst 0
-with sum ($x ⸬ $l) ↪ Add $x (sum $l);
+symbol sort_correct l gs g : π (val (sum (sort (g ⸬ gs)) ‚ l) =  val (sum (g ⸬ gs)‚ l));
 
 symbol norm x ≔ sum (remove0 (sort (aliens x)));
 
@@ -205,40 +339,10 @@ opaque symbol max_geq m n1 n2 :
 begin
 admitted;
 
-symbol toto: τ g;
 
 opaque symbol norm_correct (x: G) l :
   π(varmax x Nat.≤ size l) → π(val(norm x ‚ l) = val(x ‚ l)) ≔
 begin
-induction
-{
-  induction
-  {reflexivity}
-  {reflexivity}
-  {reflexivity}
-}
-{
-  assume i;
-  induction
-  { assume l H; simplify norm; reflexivity }
-  { assume k ctx l; reflexivity }
-  { assume k ctx l; reflexivity }
-}
-{
-  assume x IH1;
-  assume y IH2;
-  //assume l H;
-  simplify;
-  induction
-  {
-    assume H;
-    compute (val (x ‚ □)); //missing Lemma where reify with empty list return a Cst
-    admit
-  }
-  {
-    //TODO: what to do with sort (aliens x ++ aliens y) ?
-  }
-}
 admitted;
 
 symbol eta_prod [a b] (x:τ(a × b)): π(x = (x ₁) ‚ (x ₂));
@@ -247,16 +351,16 @@ symbol ≐_decides_neq [x y] : π (x ≐ y ≠ Eq ⇒ x ≠ y) ≔
 begin
 admitted;
 
-symbol l1 x y : π((x + y) - (x + y) ≠ 1) ≔
-begin
-  assume x y;
-  refine ≐_decides_neq _;
-  rewrite left .[z in z ≐ _] reify_correct;
-  set e ≔ reify ((x + y) - (x + y));
-  rewrite .[z in val z] eta_prod;
-  compute e;
-  rewrite left norm_correct (e ₁) (e ₂) _ { refine ⊤ᵢ } { refine Lt≠Eq }
-end;
+// symbol l1 x y : π((x + y) - (x + y) ≠ 1) ≔
+// begin
+//   assume x y;
+//   refine ≐_decides_neq _;
+//   rewrite left .[z in z ≐ _] reify_correct;
+//   set e ≔ reify ((x + y) - (x + y));
+//   rewrite .[z in val z] eta_prod;
+//   compute e;
+//   rewrite left norm_correct (e ₁) (e ₂) _ { refine ⊤ᵢ } { refine Lt≠Eq }
+// end;
 
 symbol ≱ : τ int → τ int → Prop ≔ λ x y, ¬ (x ≥ y);
 notation ≱ infix 10;
