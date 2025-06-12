@@ -406,9 +406,20 @@ begin
 assume a x y z xy yz; rewrite xy; refine yz
 end;
 
+opaque symbol sum++ l ys xs : π(val(sum(xs ++ ys) ‚ l) = val(sum xs ‚ l) + val(sum ys ‚ l)) ≔
+begin
+assume l ys; induction
+{ reflexivity }
+{ assume x xs IH; simplify; rewrite IH; rewrite +_assoc; reflexivity }
+end;
+
 opaque symbol aliens_correct l x : π (val (sum (aliens x) ‚ l) = val (x ‚ l)) ≔
 begin
-admitted;
+assume l; induction
+{assume k; reflexivity }
+{assume i ki; reflexivity}
+{assume x hx y hy; simplify; rewrite sum++; rewrite hx; rewrite hy; reflexivity}
+end;
 
 opaque symbol norm_correct (x: G) l :
   π(varmax x Nat.≤ size l) → π(val(norm x ‚ l) = val(x ‚ l)) ≔
