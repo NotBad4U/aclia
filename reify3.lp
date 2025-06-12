@@ -393,8 +393,11 @@ opaque symbol no_Add_sort xs : π(no_Add xs) → π(no_Add (sort xs)) ≔
 begin
 induction
 { assume h; apply ⊤ᵢ }
-{ assume x xs IH; simplify; }
-admitted;
+{ assume x xs IH h; simplify; apply no_Add_insert (sort xs) x
+  {refine ∧ₑ₁ h}
+  {apply IH; refine ∧ₑ₂ h}
+}
+end;
 
 opaque symbol sort_correct l gs : π(no_Add gs) → π (val (sum (sort gs) ‚ l) =  val (sum gs ‚ l)) ≔
 begin
