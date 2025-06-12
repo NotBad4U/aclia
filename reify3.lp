@@ -123,7 +123,7 @@ rule aliens (Cst $k) ↪ Cst $k ⸬ □
 with aliens (Var $i $k) ↪ Var $i $k ⸬ □
 with aliens (Add $x $y) ↪ aliens $x ++ aliens $y;
 
-symbol isNotAdd: τ g → Prop;
+symbol isNotAdd: τ g → Prop; //FIXME: replace Prop by 𝔹
 
 rule isNotAdd (Cst _) ↪ ⊤
 with isNotAdd (Var _ _ ) ↪ ⊤
@@ -134,9 +134,20 @@ symbol no_Add : τ(list g) → Prop;
 rule no_Add □ ↪ ⊤
 with no_Add ($g ⸬ $gs) ↪  isNotAdd $g ∧ no_Add $gs;
 
+opaque symbol no_Add_++ ys xs : π(no_Add xs ⇒ no_Add ys ⇒ no_Add(xs ++ ys)) ≔
+begin
+assume ys; induction
+{assume h1 h2; refine h2}
+{assume x xs IH h1 h2; simplify; apply ∧ᵢ {refine ∧ₑ₁ h1} {apply IH {refine ∧ₑ₂ h1} {refine h2}}}
+end;
+
 opaque symbol no_Add_aliens x : π(no_Add (aliens x)) ≔
 begin
-admitted;
+induction
+{assume k; simplify; apply ∧ᵢ ⊤ᵢ ⊤ᵢ}
+{assume i ki; simplify; apply ∧ᵢ ⊤ᵢ ⊤ᵢ}
+{assume x hx y hy; simplify; apply no_Add_++ (aliens y) (aliens x) hx hy; }
+end;
 
 // ordering of natural numbers
 
