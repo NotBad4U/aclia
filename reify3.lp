@@ -333,16 +333,39 @@ end;
 symbol sort: τ(list g) → τ(list g);
 
 rule sort □ ↪ □
-with sort ($x ⸬ $l) ↪ insert $x (sort $l);
+with sort ($x ⸬ $xs) ↪ insert $x (sort $xs);
 
-opaque symbol sort_correct l gs g : π (val (sum (sort (g ⸬ gs)) ‚ l) =  val (sum (g ⸬ gs)‚ l)) ≔
+opaque symbol no_Add_insert xs y : π(isNotAdd y) → π(no_Add xs) → π(no_Add(insert y xs)) ≔
 begin
+induction
+{ assume x h i; simplify; apply ∧ᵢ { refine h } { apply ⊤ᵢ } }
+{ assume x xs IH y h i; }
 admitted;
+
+opaque symbol no_Add_sort xs : π(no_Add xs) → π(no_Add (sort xs)) ≔
+begin
+induction
+{ assume h; apply ⊤ᵢ }
+{ assume x xs IH; simplify; }
+admitted;
+
+opaque symbol sort_correct l gs : π(no_Add gs) → π (val (sum (sort gs) ‚ l) =  val (sum gs ‚ l)) ≔
+begin
+assume l;
+induction
+{ assume h; reflexivity }
+{ assume g gs IH h;
+  have e: π(val (sum (sort gs) ‚ l) = val (sum gs ‚ l))
+    { apply IH; apply ∧ₑ₂ h };
+  simplify; rewrite left e; apply insert_correct l (sort gs) g;
+  simplify; apply ∧ᵢ { apply ∧ₑ₁ h } { apply no_Add_sort gs; apply ∧ₑ₂ h }
+}
+end;
 
 symbol norm x ≔ sum (remove0 (sort (aliens x)));
 
 // to be moved to Nat
-opaque symbol max_geq m n1 n2 :
+opaque symbol max_leq m n1 n2 :
   π (max n1 n2 Nat.≤ m ⇒ n1 Nat.≤ m ∧ n2 Nat.≤ m) ≔
 begin
 assume m n1 n2 h; apply ∧ᵢ
@@ -355,8 +378,10 @@ opaque symbol norm_correct (x: G) l :
 begin
 admitted;
 
+// move to Prod ?
 symbol eta_prod [a b] (x:τ(a × b)): π(x = (x ₁) ‚ (x ₂));
 
+// to be moved to Comp
 symbol ≐_decides_neq [x y] : π (x ≐ y ≠ Eq ⇒ x ≠ y) ≔
 begin
 admitted;
