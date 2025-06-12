@@ -1,19 +1,8 @@
-
 require aclia.Nat as Nat;
 open aclia.Nat;
 require open aclia.Pos aclia.Z aclia.Prod aclia.Set aclia.List aclia.Eq aclia.Prop aclia.FOL aclia.Bool aclia.Comp;
 
 // type for arithmetic expressions
-
-// constant symbol g:Set;
-// constant symbol G:TYPE;
-// rule τ g ↪ G;
-
-// constant symbol Cst: ℤ → G;
-// constant symbol Var: ℕ → ℤ → G;
-// constant symbol Add: G → G → G;
-  /* these are the only constructors;
-  multiplication by a constant and opposite are defined hereafter */
 
 inductive G: TYPE ≔
 | Cst: ℤ → G
@@ -24,11 +13,15 @@ inductive G: TYPE ≔
 constant symbol g : Set;
 rule τ g ↪ G;
 
+// multiplication by a constant
+
 symbol mul: ℤ → G → G;
 
 rule mul $k (Cst $l) ↪ Cst ($k * $l)
 with mul $k (Var $i $l) ↪ Var $i ($k * $l)
 with mul $k (Add $x $y) ↪ Add (mul $k $x) (mul $k $y);
+
+// opposite
 
 symbol opp ≔ mul (— 1);
 
@@ -40,19 +33,21 @@ rule varmax (Cst _) ↪ _0
 with varmax (Var $k _) ↪ $k
 with varmax (Add $x $y) ↪ max (varmax $x) (varmax $y);
 
-// evaluation of an arithmetic expression together with a list of values for variables; variables with indexes not in the list are interpreted by 0
+/* evaluation of an arithmetic expression wrt a list of values for variables
+
+variables with indexes not in the list are interpreted by 0 */
+
+opaque symbol nth ≔ nth 0;
 
 symbol val: τ(g × list int) → ℤ;
 
-symbol not_found: ℤ;
-
 rule val (Cst $k ‚ _) ↪ $k
-with val (Var $i $k ‚ $l) ↪ (nth not_found $l $i) * $k
+with val (Var $i $k ‚ $l) ↪ nth $l $i * $k
 with val (Add $x $y ‚ $l) ↪ val ($x ‚ $l) + val ($y ‚ $l);
 
-symbol wal l x ≔ val (x ‚ l);
+symbol va l x ≔ val (x ‚ l);
 
-// some useful type
+// some useful type (use inductive instead?)
 
 constant symbol R : TYPE;
 constant symbol Index : ℕ → R;
@@ -63,15 +58,18 @@ symbol case [a] : R → (ℕ → τ a) → (ℕ → τ a) → τ a;
 rule case (Index $i) $f _ ↪ $f $i
 with case (New $i) _ $g ↪ $g $i;
 
-// index of a value in a list; returns New if the value is not definitionally equivalent to some element of the list
+/* index of a value in a list: returns New if the value is not
+definitionally equivalent to some element of the list */
 
-sequential symbol index: ℕ → Π [a], τ a → τ(list a) → R;
+symbol index: ℕ → Π [a], τ a → τ(list a) → R;
 
-rule index $k $x □ ↪ New $k
+rule index $k _ □ ↪ New $k
 with index $k $x ($x ⸬ _) ↪ Index $k
-with index $k $x ($y ⸬ $l) ↪ index ($k +1) $x $l;
+with index $k $x (_ ⸬ $l) ↪ index ($k +1) $x $l;
 
-// reification: given a Lambdapi term x of type ℤ, compute an expression in G and a list of values whose evaluation is equal to x
+/* reification: given a Lambdapi term x of type ℤ, compute an
+expression in G and a list of values whose evaluation is equal to
+x. WARNING: rfy is sequential. */
 
 sequential symbol rfy: τ(list int) → ℤ → τ(g × list int);
 
@@ -89,7 +87,7 @@ with rfy $l 0 ↪ Cst 0 ‚ $l
 with rfy $l (Zpos $k) ↪ Cst (Zpos $k) ‚ $l
 with rfy $l (Zneg $k) ↪ Cst (Zneg $k) ‚ $l
 
-with rfy $l (0 * $x) ↪ Cst 0 ‚ $l
+with rfy $l (0 * _) ↪ Cst 0 ‚ $l
 with rfy $l (Zpos $k * $x) ↪
   let x ≔ rfy $l $x in
   mul (Zpos $k) (x ₁) ‚ x ₂
@@ -106,10 +104,6 @@ with rfy $l ($x * Zneg $k) ↪
 with rfy $l $x ↪
   case (index _0 $x $l) (λ i, Var i 1 ‚ $l) (λ i, Var i 1 ‚ ($l ++ ($x ⸬ □)))
 ;
-
-symbol x: τ int;
-symbol y: τ int;
-
 
 symbol reify ≔ rfy □;
 
@@ -129,6 +123,21 @@ rule aliens (Cst $k) ↪ Cst $k ⸬ □
 with aliens (Var $i $k) ↪ Var $i $k ⸬ □
 with aliens (Add $x $y) ↪ aliens $x ++ aliens $y;
 
+symbol isNotAdd: τ g → Prop;
+
+rule isNotAdd (Cst _) ↪ ⊤
+with isNotAdd (Var _ _ ) ↪ ⊤
+with isNotAdd (Add _ _ ) ↪ ⊥;
+
+symbol no_Add : τ(list g) → Prop;
+
+rule no_Add □ ↪ ⊤
+with no_Add ($g ⸬ $gs) ↪  isNotAdd $g ∧ no_Add $gs;
+
+opaque symbol no_Add_aliens x : π(no_Add (aliens x)) ≔
+begin
+admitted;
+
 // ordering of natural numbers
 
 symbol compN : ℕ → ℕ → Comp;
@@ -137,6 +146,10 @@ rule compN _0 _0 ↪ Eq
 with compN _0 (_ +1) ↪ Lt
 with compN (_ +1) _0 ↪ Gt
 with compN ($x +1) ($y +1) ↪ compN $x $y;
+
+opaque symbol compN_correct x y : π (compN x y = Eq ⇒ x = y) ≔
+begin
+admitted;
 
 // normalization of arithmetic expressions
 
@@ -161,7 +174,7 @@ rule remove0 □ ↪ □
 with remove0 (Cst 0 ⸬ $l) ↪ remove0 $l
 with remove0 (Cst (Zpos $k) ⸬ $l) ↪ Cst (Zpos $k) ⸬ remove0 $l
 with remove0 (Cst (Zneg $k) ⸬ $l) ↪ Cst (Zneg $k) ⸬ remove0 $l
-with remove0 (Var $i 0 ⸬ $l) ↪ remove0 $l
+with remove0 (Var _ 0 ⸬ $l) ↪ remove0 $l
 with remove0 (Var $i (Zpos $k) ⸬ $l) ↪ Var $i (Zpos $k) ⸬ remove0 $l
 with remove0 (Var $i (Zneg $k) ⸬ $l) ↪ Var $i (Zneg $k) ⸬ remove0 $l
 ;
@@ -171,16 +184,9 @@ symbol sum: τ(list g) → τ g;
 rule sum □ ↪ Cst 0
 with sum ($x ⸬ $l) ↪ Add $x (sum $l);
 
-symbol isNotAdd: τ g → τ bool;
-rule isNotAdd (Cst _) ↪ true
-with isNotAdd (Var _ _ ) ↪ true
-with isNotAdd (Add _ _ ) ↪ false;
+symbol vas l xs ≔ va l (sum xs);
 
-symbol no_aliens_add : τ(list g) → Prop;
-rule no_aliens_add □ ↪ ⊤
-with no_aliens_add ($g ⸬ $gs) ↪  (isNotAdd $g) ∧ (no_aliens_add $gs);
-
-opaque symbol remove0_correct l gs : π (no_aliens_add gs) →  π (val (sum (remove0 gs) ‚ l) = val (sum gs ‚ l)) ≔
+opaque symbol remove0_correct l gs : π (no_Add gs) →  π (val (sum (remove0 gs) ‚ l) = val (sum gs ‚ l)) ≔
 begin
   assume l;
   induction // on l
@@ -195,7 +201,7 @@ begin
       // Case Z0
       { assume gs IH H;  apply IH;  refine (∧ₑ₂ H) }
       // Case Zpos
-      { assume c gs IH H; simplify;  rewrite (IH (∧ₑ₂ H)); reflexivity }
+      { assume c gs IH H; simplify; rewrite (IH (∧ₑ₂ H)); reflexivity }
       // Case Zneg
       { assume c gs IH H; simplify;  rewrite (IH (∧ₑ₂ H)); reflexivity }
     }
@@ -209,7 +215,7 @@ begin
     }
     {
       // Case Add g1 g2
-      // That violate the invariant: no_aliens_add gs
+      // That violate the invariant: no_Add gs
       simplify;
       assume g1 IHg1 g2 IHg2 gs IHg H;
       refine ⊥ₑ (∧ₑ₁ H)
@@ -240,13 +246,12 @@ with insert (Var $i $ki) (Var $j $kj ⸬ $l) ↪
             (Var $j $kj ⸬ insert (Var $i $ki) $l)
 with insert $x □ ↪ $x ⸬ □;
 
-symbol compN_decides x y : π (compN x y = Eq ⇒ x = y);
-
-symbol ntheq l i k1 k2 :  π ((nth not_found l i * (k1 + k2)) = (nth not_found l i * k1) + (nth not_found l i * k2)) ≔
+// to be moved to Nat
+opaque symbol distr*+ x y z : π(x * (y + z) = x * y + x * z) ≔
 begin
 admitted;
 
-symbol insert_correct l gs g : π (no_aliens_add (g ⸬ gs)) → π (val (sum (insert g gs) ‚ l) =  val (g ‚ l) +  val (sum gs ‚ l)) ≔
+symbol insert_correct l gs g : π (no_Add (g ⸬ gs)) → π (val (sum (insert g gs) ‚ l) =  val (g ‚ l) +  val (sum gs ‚ l)) ≔
 begin
 assume l;
 induction
@@ -264,7 +269,7 @@ induction
     {
       assume i c H;
       simplify;
-      have g: π (no_aliens_add (Var i c ⸬ gs)) { 
+      have g: π (no_Add (Var i c ⸬ gs)) { 
         apply ∧ᵢ
         { refine ∧ₑ₁ H; }
         { refine ∧ₑ₂ (∧ₑ₂ H); }
@@ -290,9 +295,8 @@ induction
       {
         assume Hi_eq_j;
         simplify case_Comp;
-        rewrite compN_decides j i Hi_eq_j;
-        simplify;
-        admit
+        rewrite compN_correct j i Hi_eq_j;
+        simplify; rewrite distr*+; rewrite +_assoc; reflexivity
       }
       {
         assume Hcomp;
@@ -304,7 +308,7 @@ induction
         simplify case_Comp;
         simplify;
         type IH (Var j k2);
-        have g: π (no_aliens_add (Var j k2 ⸬ gs)) {
+        have g: π (no_Add (Var j k2 ⸬ gs)) {
           simplify;
           apply ∧ᵢ
           { refine ∧ₑ₁ Haliens }
@@ -312,8 +316,8 @@ induction
         };
         rewrite IH (Var j k2) g;
         simplify;
-        rewrite left +_assoc (nth not_found l i * k) (nth not_found l j * k2) (val (sum gs ‚ l));
-        rewrite +_com (nth not_found l i * k) (nth not_found l j * k2);
+        rewrite left +_assoc (nth l i * k) (nth l j * k2) (val (sum gs ‚ l));
+        rewrite +_com (nth l i * k) (nth l j * k2);
         rewrite +_assoc;
         reflexivity
       }
@@ -325,20 +329,26 @@ induction
 }
 end;
 
+// to be moved to List
 symbol sort: τ(list g) → τ(list g);
 
 rule sort □ ↪ □
 with sort ($x ⸬ $l) ↪ insert $x (sort $l);
 
-symbol sort_correct l gs g : π (val (sum (sort (g ⸬ gs)) ‚ l) =  val (sum (g ⸬ gs)‚ l));
-
-symbol norm x ≔ sum (remove0 (sort (aliens x)));
-
-opaque symbol max_geq m n1 n2 :
-  π (istrue ((max n1 n2) Nat.≤ m) ⇒ istrue (n1 Nat.≤ m) ∧ istrue (n2 Nat.≤ m)) ≔
+opaque symbol sort_correct l gs g : π (val (sum (sort (g ⸬ gs)) ‚ l) =  val (sum (g ⸬ gs)‚ l)) ≔
 begin
 admitted;
 
+symbol norm x ≔ sum (remove0 (sort (aliens x)));
+
+// to be moved to Nat
+opaque symbol max_geq m n1 n2 :
+  π (max n1 n2 Nat.≤ m ⇒ n1 Nat.≤ m ∧ n2 Nat.≤ m) ≔
+begin
+assume m n1 n2 h; apply ∧ᵢ
+{ refine @leq_trans n1 (max n1 n2) m _ _ { apply leq_maxl n1 n2 } { refine h } }
+{ refine @leq_trans n2 (max n1 n2) m _ _ { apply leq_maxr n1 n2 } { refine h } }
+end;
 
 opaque symbol norm_correct (x: G) l :
   π(varmax x Nat.≤ size l) → π(val(norm x ‚ l) = val(x ‚ l)) ≔
@@ -369,6 +379,8 @@ symbol ≐_decides_ngeq [x y] : π (x ≐ y ≠ Gt ∧ x ≐ y ≠ Eq ⇒ x ≱ 
 begin
 admitted;
 
+private symbol x : τ int;
+private symbol y : τ int;
 private symbol test ≔ (x + y) - (x +  y);
 
 compute let e ≔ (reify test) in val (norm (e ₁) ‚ (e ₂));
