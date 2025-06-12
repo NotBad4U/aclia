@@ -223,13 +223,13 @@ begin
   }
 end;
 
-opaque symbol case_Comp_prop [a] (p:τ a → Prop) eq lt gt :
-  π(p eq ⇒ p lt ⇒ p gt ⇒ `∀ c, p (case_Comp c eq lt gt)) ≔
+opaque symbol case_Comp_prop [a] (p:τ a → Prop) eq lt gt c :
+  π(p eq ⇒ p lt ⇒ p gt ⇒ p (case_Comp c eq lt gt)) ≔
 begin
-assume a p eq lt gt peq plt pgt; induction
-{refine peq}
-{refine plt}
-{refine pgt}
+assume a p eq lt gt; induction
+{assume peq plt pgt; refine peq}
+{assume peq plt pgt; refine plt}
+{assume peq plt pgt; refine pgt}
 end;
 
 symbol insert: G → τ(list g) → τ(list g);
@@ -266,19 +266,19 @@ induction
       {apply IH (Var ki i) {apply ⊤ᵢ} {apply ∧ₑ₂ h2}} }
     { assume x1 H1 x2 H2 h1 h2; apply ⊥ₑ; refine h1}
   }
-  { assume ki i xs IH; induction
-    { assume k' h1 h2; simplify; apply ∧ᵢ {apply ⊤ᵢ} {apply ∧ᵢ {apply ⊤ᵢ} {apply ∧ₑ₂ h2}}}
-    { assume kj j h1 h2; simplify; /*refine case_Comp_prop no_Add (Var kj (j + i) ⸬ xs) (Var kj j ⸬ (Var ki i ⸬ xs)) (Var ki i ⸬ insert (Var kj j) xs) (compN ki kj)
-      {}
-      {}
-      {}*/
+  { assume j kj xs IH; induction
+    { assume k h1 h2; simplify; apply ∧ᵢ {apply ⊤ᵢ} {apply ∧ᵢ {apply ⊤ᵢ} {apply ∧ₑ₂ h2}}}
+    { assume i ki h1 h2; simplify;
+      apply case_Comp_prop no_Add (Var i (ki + kj) ⸬ xs) (Var i ki ⸬ (Var j kj ⸬ xs)) (Var j kj ⸬ insert (Var i ki) xs) (compN i j)
+         {refine h2}
+         {simplify; apply ∧ᵢ {refine ⊤ᵢ}{refine h2}}
+         {simplify; apply ∧ᵢ{apply ⊤ᵢ}{apply IH (Var i ki) {apply ⊤ᵢ} {apply ∧ₑ₂ h2}}}
     }
-    {}
+    { assume x1 H1 x2 H2 h1 h2; apply ⊥ₑ; refine h1}
   }
-  {}
-//assume x xs IH y h i;
+  { assume x1 H1 x2 H2 xs IH y h i; apply ⊥ₑ; refine ∧ₑ₁ i}
 }
-admitted;
+end;
 
 // to be moved to Nat
 opaque symbol distr*+ x y z : π(x * (y + z) = x * y + x * z) ≔
