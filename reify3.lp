@@ -150,7 +150,7 @@ induction
 end;
 
 // ordering of natural numbers
-
+// move to Nat
 symbol compN : ℕ → ℕ → Comp;
 
 rule compN _0 _0 ↪ Eq
@@ -160,7 +160,16 @@ with compN ($x +1) ($y +1) ↪ compN $x $y;
 
 opaque symbol compN_correct x y : π (compN x y = Eq ⇒ x = y) ≔
 begin
-admitted;
+induction
+{ induction
+  {assume h; reflexivity}
+  {assume y hy h; apply ⊥ₑ; apply Lt≠Eq h}
+}
+{ assume x hx; induction
+  {assume h; apply ⊥ₑ; apply Gt≠Eq h}
+  {assume y hy h; apply feq (+1); apply hx y h }
+}
+end;
 
 // normalization of arithmetic expressions
 
