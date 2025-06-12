@@ -400,10 +400,27 @@ assume m n1 n2 h; apply ∧ᵢ
 { refine @leq_trans n2 (max n1 n2) m _ _ { apply leq_maxr n1 n2 } { refine h } }
 end;
 
+// moved to Eq
+opaque symbol eq_trans [a] (x y z:τ a) : π(x = y ⇒ y = z ⇒ x = z) ≔
+begin
+assume a x y z xy yz; rewrite xy; refine yz
+end;
+
+opaque symbol aliens_correct l x : π (val (sum (aliens x) ‚ l) = val (x ‚ l)) ≔
+begin
+admitted;
+
 opaque symbol norm_correct (x: G) l :
   π(varmax x Nat.≤ size l) → π(val(norm x ‚ l) = val(x ‚ l)) ≔
 begin
-admitted;
+assume x l h; simplify; apply eq_trans (val (sum (remove0 (sort (aliens x))) ‚ l)) (val (sum (sort (aliens x)) ‚ l)) (val (x ‚ l))
+{ apply remove0_correct l (sort(aliens x));
+  apply no_Add_sort (aliens x); apply no_Add_aliens x }
+{ apply eq_trans (val (sum (sort (aliens x)) ‚ l)) (val (sum (aliens x) ‚ l)) (val (x ‚ l))
+  { apply sort_correct l (aliens x); apply no_Add_aliens x }
+  { apply aliens_correct l x}
+}
+end;
 
 // move to Prod ?
 symbol eta_prod [a b] (x:τ(a × b)): π(x = (x ₁) ‚ (x ₂));
