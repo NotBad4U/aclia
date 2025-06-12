@@ -223,6 +223,15 @@ begin
   }
 end;
 
+opaque symbol case_Comp_prop [a] (p:τ a → Prop) eq lt gt :
+  π(p eq ⇒ p lt ⇒ p gt ⇒ `∀ c, p (case_Comp c eq lt gt)) ≔
+begin
+assume a p eq lt gt peq plt pgt; induction
+{refine peq}
+{refine plt}
+{refine pgt}
+end;
+
 symbol insert: G → τ(list g) → τ(list g);
 
 /*
@@ -236,15 +245,40 @@ with insert (Var $i $ki) (Var $j $kj ⸬ $l) ↪
             (Var $j $kj ⸬ insert (Var $i $ki) $l);
 */
 
-rule insert (Cst $k) (Cst $k' ⸬ $l) ↪ Cst ($k + $k') ⸬ $l
+rule insert $x □ ↪ $x ⸬ □
+with insert (Cst $k) (Cst $k' ⸬ $l) ↪ Cst ($k + $k') ⸬ $l
 with insert (Cst $k) (Var $i $k' ⸬ $l) ↪ Cst $k ⸬ Var $i $k' ⸬ $l
 with insert (Var $i $k) (Cst $k' ⸬ $l) ↪ Cst $k' ⸬ insert (Var $i $k) $l
 with insert (Var $i $ki) (Var $j $kj ⸬ $l) ↪
      case_Comp (compN $i $j)
             (Var $i ($ki + $kj) ⸬ $l)
             (Var $i $ki ⸬ Var $j $kj ⸬ $l)
-            (Var $j $kj ⸬ insert (Var $i $ki) $l)
-with insert $x □ ↪ $x ⸬ □;
+            (Var $j $kj ⸬ insert (Var $i $ki) $l);
+
+opaque symbol no_Add_insert xs y : π(isNotAdd y) → π(no_Add xs) → π(no_Add(insert y xs)) ≔
+begin
+induction
+{ assume x h i; simplify; apply ∧ᵢ { refine h } { apply ⊤ᵢ } }
+{ induction
+  { assume k xs IH; induction
+    { assume k' h1 h2; simplify; apply ∧ᵢ {apply ⊤ᵢ} {apply ∧ₑ₂ h2} }
+    { assume ki i h1 h2; simplify; apply ∧ᵢ {apply ⊤ᵢ}
+      {apply IH (Var ki i) {apply ⊤ᵢ} {apply ∧ₑ₂ h2}} }
+    { assume x1 H1 x2 H2 h1 h2; apply ⊥ₑ; refine h1}
+  }
+  { assume ki i xs IH; induction
+    { assume k' h1 h2; simplify; apply ∧ᵢ {apply ⊤ᵢ} {apply ∧ᵢ {apply ⊤ᵢ} {apply ∧ₑ₂ h2}}}
+    { assume kj j h1 h2; simplify; /*refine case_Comp_prop no_Add (Var kj (j + i) ⸬ xs) (Var kj j ⸬ (Var ki i ⸬ xs)) (Var ki i ⸬ insert (Var kj j) xs) (compN ki kj)
+      {}
+      {}
+      {}*/
+    }
+    {}
+  }
+  {}
+//assume x xs IH y h i;
+}
+admitted;
 
 // to be moved to Nat
 opaque symbol distr*+ x y z : π(x * (y + z) = x * y + x * z) ≔
@@ -334,13 +368,6 @@ symbol sort: τ(list g) → τ(list g);
 
 rule sort □ ↪ □
 with sort ($x ⸬ $xs) ↪ insert $x (sort $xs);
-
-opaque symbol no_Add_insert xs y : π(isNotAdd y) → π(no_Add xs) → π(no_Add(insert y xs)) ≔
-begin
-induction
-{ assume x h i; simplify; apply ∧ᵢ { refine h } { apply ⊤ᵢ } }
-{ assume x xs IH y h i; }
-admitted;
 
 opaque symbol no_Add_sort xs : π(no_Add xs) → π(no_Add (sort xs)) ≔
 begin
