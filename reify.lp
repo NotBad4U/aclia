@@ -61,11 +61,13 @@ with case (New $i) _ $g ↪ $g $i;
 /* index of a value in a list: returns New if the value is not
 definitionally equivalent to some element of the list */
 
-symbol index: ℕ → Π [a], τ a → τ(list a) → R;
+sequential symbol index: ℕ → Π [a], τ a → τ(list a) → R;
 
 rule index $k _ □ ↪ New $k
 with index $k $x ($x ⸬ _) ↪ Index $k
-with index $k $x (_ ⸬ $l) ↪ index ($k +1) $x $l;
+with index $k $x ($y ⸬ $l) ↪ index ($k +1) $x $l;
+
+compute index _0 1 (1 ⸬ 4 ⸬ □);
 
 /* reification: given a Lambdapi term x of type ℤ, compute an
 expression in G and a list of values whose evaluation is equal to
@@ -464,16 +466,16 @@ symbol ≐_decides_neq [x y] : π (x ≐ y ≠ Eq ⇒ x ≠ y) ≔
 begin
 admitted;
 
-// symbol l1 x y : π((x + y) - (x + y) ≠ 1) ≔
-// begin
-//   assume x y;
-//   refine ≐_decides_neq _;
-//   rewrite left .[z in z ≐ _] reify_correct;
-//   set e ≔ reify ((x + y) - (x + y));
-//   rewrite .[z in val z] eta_prod;
-//   compute e;
-//   rewrite left norm_correct (e ₁) (e ₂) _ { refine ⊤ᵢ } { refine Lt≠Eq }
-// end;
+symbol l1 x y : π((x + y) - (x + y) ≠ 1) ≔
+begin
+  assume x y;
+  refine ≐_decides_neq _;
+  rewrite left .[z in z ≐ _] reify_correct;
+  set e ≔ reify ((x + y) - (x + y));
+  rewrite .[z in val z] eta_prod;
+  compute e;
+  rewrite left norm_correct (e ₁) (e ₂) _ { refine ⊤ᵢ } { refine Lt≠Eq }
+end;
 
 symbol ≱ : τ int → τ int → Prop ≔ λ x y, ¬ (x ≥ y);
 notation ≱ infix 10;
@@ -487,3 +489,33 @@ private symbol y : τ int;
 private symbol test ≔ (x + y) - (x +  y);
 
 compute let e ≔ (reify test) in val (norm (e ₁) ‚ (e ₂));
+
+require open aclia.Impred;
+require open aclia.PropExt;
+
+symbol Zle_not_gt n m:  π ((n ≤ m) = ¬ (n > m));
+symbol Zlt_not_ge n m:  π ((n < m) = ¬ (n ≥ m));
+symbol Zge_not_lt : Π n: ℤ, Π m: ℤ, π ((n ≥ m) = ¬ (n < m));
+symbol Zgt_not_le : Π n: ℤ, Π m: ℤ, π ((n > m) = ¬ (n ≤ m));
+symbol Zmult_gt_compat c a b : π (c > 0) → π (a > b) → π (c * a > c * b) ;
+symbol Zmult_ge_compat c a b : π (c > 0) → π (a ≥ b) → π (c * a ≥ c * b);
+symbol Zgt_le_succ_r a b: π (a > b) → π (a ≥ b + 1);
+symbol Zinv_lt a b: π (a < b) → π (— a > — b);
+opaque symbol Zsum_geq_s a b c d : π (a ≥ b) → π (c ≥ d) → π (a + c ≥ b + d) ≔ begin admit end;
+symbol Z_diff_geq_Z0 a b: π (a ≥ b) → π (a - b ≥ 0);
+symbol Z_diff_gt_Z0 a b: π (a > b) → π (a - b > 0);
+symbol Zgt_le_succ_r_eq a b: π ((a > b) = (a ≥ b + 1));
+symbol Zinv_lt_eq a b: π ((a < b) = (— a > — b));
+symbol Zinv_le_eq a b: π ((a ≤ b) = (— a ≥ — b));
+symbol Z_diff_geq_Z0_eq a b: π ((a ≥ b) = (a - b ≥ 0));
+symbol Z_diff_gt_Z0_eq a b: π ((a > b) = (a - b > 0));
+symbol Z_diff_eq_Z0_eq a b: π ((a = b) = (a - b = 0));
+symbol Z_eq_antisym (a b: τ int):  π ((¬ (a = b)) = ¬ (a ≥ b));
+symbol Zmult_eq_compat_eq (c a b: τ int) : π ((¬ (a = b)) = ¬ (c * a = c * b));
+symbol Zmult_gt_compat_eq c a b : π (¬ (a > b) = ¬ (c * a > c * b)) ;
+symbol Zmult_ge_compat_eq c a b : π (¬ (a ≥ b) = ¬ (c * a ≥ c * b)) ;
+symbol la_mult_neg_eq [t1 t2 t3] : π ((t1 < 0) ⇒ (t2 = t3) ⇒ (t1 * t2) = (t1 * t3));
+symbol la_mult_neg_lt t1 t2 t3 : π (t1 < 0) → π (t2 < t3) → π ((t1 * t2) > (t1 * t3));
+symbol la_mult_neg_leq [t1 t2 t3] : π ((t1 < 0) ⇒ (t2 ≤ t3) ⇒ (t1 * t2) ≥ (t1 * t3));
+symbol la_mult_neg_gt [t1 t2 t3] : π ((t1 < 0) ⇒ (t2 > t3) ⇒ (t1 * t2) < (t1 * t3));
+symbol la_mult_neg_ge [t1 t2 t3] : π ((t1 < 0) ⇒ (t2 ≥ t3) ⇒ (t1 * t2) ≤ (t1 * t3));
