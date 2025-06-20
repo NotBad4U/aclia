@@ -7,7 +7,7 @@ require open aclia.Bool;
 require open aclia.Nat;
 require open aclia.Impred;
 require open aclia.Classic;
-require open aclia.propExt;
+require open aclia.PropExt;
 
 notation ¬ prefix 35;
 
