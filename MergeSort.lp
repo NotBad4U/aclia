@@ -16,10 +16,32 @@ with split ($x ⸬ $y ⸬ $l) ↪
     let res ≔  (split $l) in
         ($x ⸬ (res ₁)) ‚ ($y ⸬ (res ₂));
 
-// opaque symbol split_correct l: π (val ( split  ) = val (sum gs ‚ l)) ≔
-// begin
-  
-// end;
+
+symbol list_ind2_principle [A : Set]  :
+  Π (P : τ (list A) → Prop),
+    π (P □) →
+    (Π (a: τ A), π (P (a ⸬ □))) →
+    (Π (a b : τ A) (l : τ (list A)), π (P l) →  π (P (a ⸬ b ⸬ l))) →
+    Π (l : τ (list A)), π (P l);
+
+opaque symbol split_correct l gs : π (val (Add (sum (split gs ₁)) (sum (split gs ₂)) ‚ l) = val (sum gs ‚ l)) ≔
+begin
+assume l;
+refine list_ind2_principle (λ u, (val (Add (sum (split u ₁)) (sum (split u ₂)) ‚ l) = val (sum u ‚ l))) _ _ _
+{reflexivity}
+{reflexivity}
+{
+  assume a b tl ih;
+  simplify;
+  rewrite left ih;
+  simplify;
+  rewrite +_assoc;
+  rewrite left .[in x in (_ + x ) = _] +_assoc;
+  rewrite +_com (val (sum (split tl ₁) ‚ l)) (val (b ‚ l));
+  rewrite .[in x in (_ + x ) = _] +_assoc;
+  reflexivity
+}
+end;
 
 symbol merge  (l1 l2 : τ (list g)): τ (list g);
 rule merge □ □ ↪ □
@@ -139,15 +161,37 @@ with mergesort ($x ⸬ $y ⸬ $l) ↪
     let l2 ≔ s ₂ in
         merge (mergesort l1) (mergesort l2);
 
+opaque symbol mergesort_correct l g : π (no_Add g) →  π (val ( sum (mergesort g) ‚ l ) = val (sum g ‚ l)) ≔
+begin
+  assume l;
+  refine list_ind2_principle (λ u, (no_Add u) ⇒ (val (sum (mergesort u) ‚ l) = val (sum u ‚ l))) _ _ _
+  {reflexivity}
+  {reflexivity}
+  {
+    admit
+  }
+end;
+
 compute mergesort ((Var Nat._3 2) ⸬ (Var Nat._2 2) ⸬ (Var Nat._1 2) ⸬ Cst 10 ⸬ □);
 
 symbol norm_speed x ≔ sum (remove0 (mergesort (aliens x)));
 
-opaque symbol norm_speed_correct (x: G) l :
-  π(varmax x Nat.≤ size l) → π(val(norm_speed x ‚ l) = val(x ‚ l)) ≔
+
+opaque symbol no_Add_mergesort xs : π(no_Add xs) → π(no_Add (mergesort xs)) ≔
 begin
 admitted;
 
+opaque symbol norm_with_mergesort_correct (x: G) l :
+  π(varmax x Nat.≤ size l) → π(val(norm_speed x ‚ l) = val(x ‚ l)) ≔
+begin
+assume x l h; simplify; apply eq_trans (val (sum (remove0 (mergesort (aliens x))) ‚ l)) (val (sum (mergesort (aliens x)) ‚ l)) (val (x ‚ l))
+{ apply remove0_correct l (mergesort(aliens x));
+  apply no_Add_mergesort (aliens x); apply no_Add_aliens x }
+{ apply eq_trans (val (sum (mergesort (aliens x)) ‚ l)) (val (sum (aliens x) ‚ l)) (val (x ‚ l))
+  { apply mergesort_correct l (aliens x); apply no_Add_aliens x }
+  { apply aliens_correct l x}
+}
+end;
 
 symbol l1 x y : π((x + y) - (x + y) ≠ 1) ≔
 begin
@@ -157,5 +201,5 @@ begin
   set e ≔ reify ((x + y) - (x + y));
   rewrite .[z in val z] eta_prod;
   compute e;
-  rewrite left norm_speed_correct (e ₁) (e ₂) _ { refine ⊤ᵢ } { refine Lt≠Eq }
+  rewrite left norm_with_mergesort_correct (e ₁) (e ₂) _ { refine ⊤ᵢ } { refine Lt≠Eq }
 end;
