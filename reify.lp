@@ -10,8 +10,8 @@ inductive G: TYPE ≔
 | Add: G → G → G
 ; 
 
-constant symbol g : Set;
-rule τ g ↪ G;
+constant symbol grp : Set;
+rule τ grp ↪ G;
 
 // multiplication by a constant
 
@@ -39,7 +39,7 @@ variables with indexes not in the list are interpreted by 0 */
 
 opaque symbol nth ≔ nth 0;
 
-symbol val: τ(g × list int) → ℤ;
+symbol val: τ(grp × list int) → ℤ;
 
 rule val (Cst $k ‚ _) ↪ $k
 with val (Var $i $k ‚ $l) ↪ nth $l $i * $k
@@ -73,7 +73,7 @@ compute index _0 1 (1 ⸬ 4 ⸬ □);
 expression in G and a list of values whose evaluation is equal to
 x. WARNING: rfy is sequential. */
 
-sequential symbol rfy: τ(list int) → ℤ → τ(g × list int);
+sequential symbol rfy: τ(list int) → ℤ → τ(grp × list int);
 
 rule rfy $l ($x + $y) ↪
   let x ≔ rfy $l $x in
@@ -119,19 +119,19 @@ end;
 
 // aliens (constants and variables) of an arithmetic expression
 
-symbol aliens: G → τ(list g);
+symbol aliens: G → τ(list grp);
 
 rule aliens (Cst $k) ↪ Cst $k ⸬ □
 with aliens (Var $i $k) ↪ Var $i $k ⸬ □
 with aliens (Add $x $y) ↪ aliens $x ++ aliens $y;
 
-symbol isNotAdd: τ g → Prop; //FIXME: replace Prop by 𝔹
+symbol isNotAdd: τ grp → Prop; //FIXME: replace Prop by 𝔹
 
 rule isNotAdd (Cst _) ↪ ⊤
 with isNotAdd (Var _ _ ) ↪ ⊤
 with isNotAdd (Add _ _ ) ↪ ⊥;
 
-symbol no_Add : τ(list g) → Prop;
+symbol no_Add : τ(list grp) → Prop;
 
 rule no_Add □ ↪ ⊤
 with no_Add ($g ⸬ $gs) ↪  isNotAdd $g ∧ no_Add $gs;
@@ -176,7 +176,7 @@ end;
 // normalization of arithmetic expressions
 
 /*
-symbol merge : τ(list g) → τ(list g);
+symbol merge : τ(list grp) → τ(list grp);
 
 rule merge □ ↪ □
 with merge ($x ⸬ □) ↪ $x ⸬ □
@@ -190,7 +190,7 @@ with merge (Var $i $ki ⸬ Var $j $kj ⸬ $l) ↪
 ;
 */
 
-symbol remove0 : τ(list g) → τ(list g);
+symbol remove0 : τ(list grp) → τ(list grp);
 
 rule remove0 □ ↪ □
 with remove0 (Cst 0 ⸬ $l) ↪ remove0 $l
@@ -201,7 +201,7 @@ with remove0 (Var $i (Zpos $k) ⸬ $l) ↪ Var $i (Zpos $k) ⸬ remove0 $l
 with remove0 (Var $i (Zneg $k) ⸬ $l) ↪ Var $i (Zneg $k) ⸬ remove0 $l
 ;
 
-symbol sum: τ(list g) → τ g;
+symbol sum: τ(list grp) → τ grp;
 
 rule sum □ ↪ Cst 0
 with sum ($x ⸬ $l) ↪ Add $x (sum $l);
@@ -254,7 +254,7 @@ assume a p eq lt gt; induction
 {assume peq plt pgt; refine pgt}
 end;
 
-symbol insert: G → τ(list g) → τ(list g);
+symbol insert: G → τ(list grp) → τ(list grp);
 
 /*
 rule insert (Cst $k) (Cst $k' ⸬ $l) ↪ Cst $k ⸬ Cst $k' ⸬ $l
@@ -273,9 +273,9 @@ with insert (Cst $k) (Var $i $k' ⸬ $l) ↪ Cst $k ⸬ Var $i $k' ⸬ $l
 with insert (Var $i $k) (Cst $k' ⸬ $l) ↪ Cst $k' ⸬ insert (Var $i $k) $l
 with insert (Var $i $ki) (Var $j $kj ⸬ $l) ↪
      case_Comp (compN $i $j)
-            (Var $i ($ki + $kj) ⸬ $l)
-            (Var $i $ki ⸬ Var $j $kj ⸬ $l)
-            (Var $j $kj ⸬ insert (Var $i $ki) $l);
+            (Var $i ($ki + $kj) ⸬ $l) // Eq
+            (Var $i $ki ⸬ Var $j $kj ⸬ $l) // Lt
+            (Var $j $kj ⸬ insert (Var $i $ki) $l); // i > j
 
 opaque symbol no_Add_insert xs y : π(isNotAdd y) → π(no_Add xs) → π(no_Add(insert y xs)) ≔
 begin
@@ -386,7 +386,7 @@ induction
 end;
 
 // to be moved to List
-symbol sort: τ(list g) → τ(list g);
+symbol sort: τ(list grp) → τ(list grp);
 
 rule sort □ ↪ □
 with sort ($x ⸬ $xs) ↪ insert $x (sort $xs);

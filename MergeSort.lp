@@ -43,7 +43,8 @@ refine list_ind2_principle (λ u, (val (Add (sum (split u ₁)) (sum (split u �
 }
 end;
 
-symbol merge  (l1 l2 : τ (list g)): τ (list g);
+
+symbol merge  (l1 l2 : τ (list grp)): τ (list grp);
 rule merge □ □ ↪ □
 with merge □ $l2 ↪ $l2
 with merge $l1 □ ↪ $l1
@@ -152,7 +153,7 @@ begin
 end;
 
 
-symbol mergesort:  τ (list g) →  τ (list g);
+symbol mergesort:  τ (list grp) →  τ (list grp);
 rule mergesort □ ↪ □
 with mergesort ($x ⸬ □) ↪ ($x ⸬ □)
 with mergesort ($x ⸬ $y ⸬ $l) ↪ 
@@ -161,16 +162,149 @@ with mergesort ($x ⸬ $y ⸬ $l) ↪
     let l2 ≔ s ₂ in
         merge (mergesort l1) (mergesort l2);
 
-opaque symbol mergesort_correct l g : π (no_Add g) →  π (val ( sum (mergesort g) ‚ l ) = val (sum g ‚ l)) ≔
+symbol mergesort_head_correct l x tl : π (val (sum (mergesort (x ⸬ tl)) ‚ l) = val (x ‚ l) + val (sum tl ‚ l));
+
+// symbol ind_list2 : 
+
+
+
+
+print 𝕃;
+
+opaque symbol rec_𝕃 : Π [a: Set], Π l: 𝕃 a, Π p: (𝕃 a → Prop), π (p □) → (Π x0: τ a, Π l': 𝕃 a, π (p (x0 ⸬ l'))) → π (p l) ≔ 
 begin
-  assume l;
-  refine list_ind2_principle (λ u, (no_Add u) ⇒ (val (sum (mergesort u) ‚ l) = val (sum u ‚ l))) _ _ _
-  {reflexivity}
-  {reflexivity}
+  assume a l P H1 H2;
+  refine @ind_𝕃 a P H1 (λ x l' ih, H2 x l') l
+end;
+
+opaque symbol case_l [a] x (l: 𝕃 a) n : π ((size (x ⸬ l)) Nat.≤ (n +1)) → π (size l Nat.≤ n) ≔
+begin
+  assume a x l n;
+  refine λ x, x;
+end;
+
+opaque symbol jsp [a] (l': 𝕃 a) y : π (istrue (size (split l' ₁) Nat.≤ size (split (y ⸬ l') ₁))) ≔
+begin
+  assume a;
+  refine list_ind2_principle (λ u, `∀ y, (istrue (size (split u ₁) Nat.≤ size (split (y ⸬ u) ₁)))) _ _ _
+  { simplify; assume x; apply ⊤ᵢ }
+  { assume x y; simplify; apply ⊤ᵢ }
   {
-    admit
+    simplify;
+    assume x y l ih z;
+    apply ih y
   }
 end;
+
+
+opaque symbol size_split [a] (l: 𝕃 a) : π (size ((split l) ₁) Nat.≤ size l) ≔
+begin
+  assume a;
+  refine list_ind2_principle (λ u, istrue (size (split u ₁) Nat.≤ size u)) _ _ _
+  {apply ⊤ᵢ}
+  {assume y; apply ⊤ᵢ}
+  {
+    simplify;
+    assume x y l ih;
+    apply @leq_trans (size (split l ₁)) (size l) (size l +1) ih _;
+    refine leqnSn (size l)
+  }
+end;
+
+opaque symbol size_split2 [a] (l: 𝕃 a) : π (size ((split l) ₂) Nat.≤ size l) ≔
+begin
+  assume a;
+  refine list_ind2_principle (λ u, istrue (size (split u ₂) Nat.≤ size u)) _ _ _
+  {apply ⊤ᵢ}
+  {assume y; apply ⊤ᵢ}
+  {
+    simplify;
+    assume x y l ih;
+    apply @leq_trans (size (split l ₂)) (size l) (size l +1) ih _;
+    refine leqnSn (size l)
+  }
+end;
+
+opaque symbol mergesort_correct_aux n l g : π (size g Nat.≤ n) →  π (no_Add g) →  π (val ( sum (mergesort g) ‚ l ) = val (sum g ‚ l)) ≔
+begin
+  //assume n l;
+  induction
+  {
+    assume l;
+    assume g h inv;
+    type ≤0 (size g) h;
+    rewrite size0nil g (≤0 (size g) h);
+    reflexivity
+  }
+  {
+    assume n;
+    assume ihn l g;
+    refine rec_𝕃 g (λ u, istrue (size u Nat.≤ (n +1)) ⇒ (no_Add u ⇒ (val (sum (mergesort u) ‚ l) = val (sum u ‚ l)))) _ _
+    {
+      assume h1 h2; reflexivity
+    }
+    {
+      assume x g';
+      refine rec_𝕃 g' (λ u, istrue (size (x ⸬ u) Nat.≤ (n +1)) ⇒ (no_Add (x ⸬ u) ⇒ (val (sum (mergesort (x ⸬ u)) ‚ l) = val (sum (x ⸬ u) ‚ l)))) _ _
+      {
+        assume h1 inv; reflexivity;
+      }
+      {
+        assume y g'' inv1 inv2;
+        simplify;
+        have tmp: π (no_Add (mergesort (x ⸬ (split g'' ₁)))) { admit};
+        have tmp2: π (no_Add (mergesort (y ⸬ (split g'' ₂)))) { admit};
+        rewrite (merge_correct l (mergesort (x ⸬ ((split g'') ₁))) (mergesort (y ⸬ ((split g'') ₂)))) tmp tmp2;
+        type ihn l (x ⸬ (split g'' ₁)) ;
+        have tmp3x: π (istrue (size (x ⸬ (split g'' ₁)) Nat.≤ n)) {
+          generalize inv1;
+          assume inv1 h1 h2 h3;
+          apply @leq_trans
+          (size (split g'' ₁) +1)
+          (size g'' +1)
+          n
+          _
+          inv1;
+          apply size_split g''
+        };
+        have tmp4x: π (no_Add (x ⸬ (split g'' ₁))) {admit};
+        rewrite ihn l (x ⸬ (split g'' ₁)) tmp3x tmp4x;
+        have tmp3y: π (istrue (size (y ⸬ (split g'' ₂)) Nat.≤ n)) {
+          generalize inv1;
+          simplify;
+          assume  inv1 h1 h2 h3 h4 h5;
+          apply @leq_trans
+          (size (split g'' ₂) +1)
+          (size g'' +1)
+          n
+          _
+          inv1;
+          simplify;
+          apply size_split2 g''
+        };
+        have tmp4y: π (no_Add (y ⸬ (split g'' ₂))) {admit};
+        rewrite ihn l (y ⸬ (split g'' ₂)) tmp3y tmp4y;
+        simplify;
+        rewrite +_assoc;
+        refine @feq2 int int int (+) (val (x ‚ l)) (val (x ‚ l)) (eq_refl (val (x ‚ l)))
+        (val (sum (split g'' ₁) ‚ l) + (val (y ‚ l) + val (sum (split g'' ₂) ‚ l)))
+        (val (y ‚ l) + val (sum g'' ‚ l)) _
+        ;
+        rewrite left +_assoc;
+        rewrite .[in x in (x + _) = _ ] +_com;
+        rewrite  +_assoc;
+        refine @feq2 int int int (+) (val (y ‚ l)) (val (y ‚ l)) (eq_refl (val (y ‚ l)))
+        (val (sum (split g'' ₁) ‚ l) + val (sum (split g'' ₂) ‚ l))
+        (val (sum g'' ‚ l))
+        _
+        ;
+        apply split_correct l g''     
+      }
+    };
+  }
+end;
+
+symbol mergesort_correct l g ≔ mergesort_correct_aux (size g) l g (Nat.≤_refl (size g)); 
 
 compute mergesort ((Var Nat._3 2) ⸬ (Var Nat._2 2) ⸬ (Var Nat._1 2) ⸬ Cst 10 ⸬ □);
 
@@ -188,7 +322,8 @@ assume x l h; simplify; apply eq_trans (val (sum (remove0 (mergesort (aliens x))
 { apply remove0_correct l (mergesort(aliens x));
   apply no_Add_mergesort (aliens x); apply no_Add_aliens x }
 { apply eq_trans (val (sum (mergesort (aliens x)) ‚ l)) (val (sum (aliens x) ‚ l)) (val (x ‚ l))
-  { apply mergesort_correct l (aliens x); apply no_Add_aliens x }
+  { apply mergesort_correct l (aliens x);
+    apply no_Add_aliens x }
   { apply aliens_correct l x}
 }
 end;
@@ -200,6 +335,5 @@ begin
   rewrite left .[z in z ≐ _] reify_correct;
   set e ≔ reify ((x + y) - (x + y));
   rewrite .[z in val z] eta_prod;
-  compute e;
   rewrite left norm_with_mergesort_correct (e ₁) (e ₂) _ { refine ⊤ᵢ } { refine Lt≠Eq }
 end;
