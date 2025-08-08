@@ -63,6 +63,13 @@ symbol not : 𝔹 → 𝔹;
 rule not true  ↪ false
 with not false ↪ true;
 
+opaque symbol negb_false_iff b : π (not b = false ⇔ b = true) ≔
+begin
+induction
+{simplify; apply ∧ᵢ { assume h; reflexivity } { assume h; reflexivity }}
+{simplify; apply ∧ᵢ { assume h; apply ⊥ₑ (true≠false h) } { assume h; apply ⊥ₑ (false≠true h) }}
+end;
+
 // or
 
 symbol or : 𝔹 → 𝔹 → 𝔹;
@@ -73,6 +80,55 @@ rule true  or _     ↪ true
 with _     or true  ↪ true
 with false or $b    ↪ $b
 with $b    or false ↪ $b;
+
+symbol imp : 𝔹 → 𝔹 → 𝔹;
+
+notation imp infix left 20;
+
+rule true imp true ↪ true
+with true imp false ↪ false
+with false imp true ↪ true
+with false imp false ↪ true;
+
+opaque symbol ⇒_istrue [p q : 𝔹] : π(p imp q) → π(p ⇒ q) ≔
+begin
+  induction
+  { induction
+    {
+      simplify;
+      assume h1; refine (λ x, x)
+    }
+    {
+      simplify; assume h1 h2; refine h1
+    }
+  }
+  {
+    induction
+    {
+      simplify;
+      assume h1 h2; apply h1
+    }
+    {
+      simplify;
+      assume h1; refine (λ x, x)
+    }
+   }
+end;
+
+
+opaque symbol ¬_istrue [p: 𝔹] : π(not p) → π(¬ p) ≔
+begin
+  induction
+  { assume contra h; apply ⊥ₑ contra }
+  { assume b hbot; apply hbot }
+end;
+
+opaque symbol istrue_not [p: 𝔹] : π(¬ p) → π(not p)  ≔
+begin
+  induction
+  { assume h; refine h _; apply ⊤ᵢ }
+  { assume h; apply ⊤ᵢ }
+end;
 
 opaque symbol ∨_istrue [p q : 𝔹] : π(p or q) → π(p ∨ q) ≔
 begin
@@ -170,6 +226,16 @@ begin
   { assume q i; apply i; }
   { assume q i; apply ⊥ₑ i; }
 end;
+
+symbol xor : 𝔹 → 𝔹 → 𝔹;
+
+notation xor infix left 22;
+
+rule false xor false ↪ false
+with false xor true ↪ true
+with true xor false ↪ true
+with true xor true ↪ false
+;
 
 // if-then-else
 

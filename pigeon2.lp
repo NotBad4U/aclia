@@ -118,7 +118,7 @@ have Hla : π̇ (((¬ (((p_0_1 + p_1_1 + p_2_1) ≤ 1))) ∨ (¬ ((((— 1) * (p
     set r' ≔ reify r;
     rewrite eta_prod l';
     rewrite eta_prod r';
-    rewrite left norm_correct (l' ₁) (l' ₂) _ { refine ⊤ᵢ } { apply ⊤ᵢ };
+    rewrite left norm_correct (l' ₁) (l' ₂) _ { refine ⊤ᵢ } { print  <; apply ⊤ᵢ };
 };
 simplify;
 rewrite or_identity_r;

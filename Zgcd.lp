@@ -1,138 +1,4 @@
-require open aclia.Prop;
-require open aclia.FOL;
-require open aclia.Eq;
-require open aclia.Set;
-require open aclia.Z;
-require open aclia.Pos;
-require open aclia.Bool;
-require open aclia.Prod;
-require open aclia.Comp;
-require open aclia.Classic;
-require open aclia.PropExt;
-require open aclia.Impred;
-require open aclia.Alethe;
-
-constant symbol ℚ : TYPE;
-constant symbol Qmake : ℤ → ℙ → ℚ;
-
-constant symbol rational : Set;
-rule τ rational ↪ ℚ;
-
-symbol inject_Z (x: ℤ) ≔  Qmake x H;
-symbol inject_P_in_Z (x: ℙ) ≔  Zpos x;
-
-coerce_rule coerce ℤ ℚ $x ↪ inject_Z $x;
-coerce_rule coerce ℙ ℤ $x ↪ inject_P_in_Z $x;
-
-// constant symbol JMeq : Π [a], Π (x: τ a), Π [b], τ b → Prop;
-
-// symbol Rat_to_Int: Π x: ℤ, π (JMeq (x # H) x);
-
-symbol Qnum (q: ℚ): ℤ;
-rule Qnum (Qmake $z $p) ↪ $z;
-
-symbol Qden (q: ℚ): ℙ;
-rule Qden (Qmake $z $p) ↪ $p;
-
-symbol QDen (q: ℚ): ℤ ≔ Zpos (Qden q);
-
-symbol q≐ : ℚ → ℚ → Comp;  notation q≐  infix 10; //≔ (Qnum p) * (QDen q) ≐ (Qnum q) * (QDen p); notation q≐ infix 10;
-rule  (Qmake $n1 $d1) q≐ (Qmake $n2 $d2) ↪ ($n1 * $d2) ≐ ($n2 *  $d1);
-
-symbol q= : ℚ → ℚ → Prop; notation q= infix 10;  //≔ (Qnum p) * (QDen q) = (Qnum q) * (QDen p); notation q= infix 10;
-rule (Qmake $n1 $d1) q= (Qmake $n2 $d2) ↪ ($n1 * $d2) = ($n2 *  $d1);
-
-symbol q≤ : ℚ → ℚ → Prop;  notation q≤  infix 15; //≔ ((Qnum p) * (QDen q)) ≤ ((Qnum q) * (QDen p)); notation q≤ infix 10;
-rule  (Qmake $n1 $d1) q≤ (Qmake $n2 $d2) ↪ ($n1 * $d2) ≤ ($n2 *  $d1); 
-
-symbol q< : ℚ → ℚ → Prop; notation q< infix 15;  //≔ ((Qnum p) * (QDen q)) < ((Qnum q) * (QDen p)); notation q< infix 10;
-rule (Qmake $n1 $d1)  q<(Qmake $n2 $d2) ↪ ($n1 * $d2) < ($n2 *  $d1);
-
-symbol q≥ : ℚ → ℚ → Prop;  notation q≥  infix 15; //≔  ((Qnum p) * (QDen q)) ≥ ((Qnum q) * (QDen p)); notation q≥ infix 10;
-rule  (Qmake $n1 $d1) q≥ (Qmake $n2 $d2) ↪ ($n1 * $d2) ≥ ($n2 *  $d1); 
-
-symbol q> : ℚ → ℚ → Prop; notation q> infix 15;  //≔ ((Qnum p) * (QDen q)) > ((Qnum q) * (QDen p)); notation q> infix 10;
-rule (Qmake $n1 $d1)  q>(Qmake $n2 $d2) ↪ ($n1 * $d2) > ($n2 *  $d1); 
-
-symbol q+: ℚ → ℚ → ℚ; notation q+ infix left 20 ; // λ x, λ y, ((Qnum x * QDen y) + (Qnum y * QDen x)) # (mul (Qden x) (Qden y));
-rule (Qmake $n1 $d1)  q+ (Qmake $n2 $d2) ↪ Qmake (($n1 * $d2) + ($n2 *  $d1)) (mul $d1 $d2);
-
-
-symbol q*: ℚ → ℚ → ℚ; notation q* infix left 22; //≔ λ x, λ y, (Qnum x * Qnum y) # (mul(Qden x) (Qden y));
-rule (Qmake $n1 $d1)  q* (Qmake $n2 $d2) ↪ Qmake ($n1 * $n2) (mul $d1 $d2);
-
-symbol q~: ℚ → ℚ; notation q~ prefix 24; // ≔ λ x, (— (Qnum x)) # (Qden x);
-rule q~ (Qmake $n $d) ↪ Qmake (— $n) $d;
-
-symbol q-: ℚ → ℚ → ℚ; notation q- infix left 21; //≔ λ x, λ y, x q+ (q~ y); 
-rule $x q- $y ↪  $x q+ (q~ $y);
-
-symbol Qinv: ℚ → ℚ;
-rule Qinv (Qmake Z0 $y) ↪ Qmake Z0 H
-with Qinv (Qmake (Zpos $x) $y) ↪ Qmake (Zpos $y) $x
-with Qinv (Qmake (Zneg $x) $y) ↪ Qmake (Zneg $y) $x;
-
-symbol Qdiv: ℚ → ℚ → ℚ;
-rule Qdiv $x $y ↪ $x q* (Qinv $y);
-
-symbol 1#1 : ℚ ≔ Qmake 1 H;
-
-symbol Qeq_refl [x] : π (x q= x);
-
-symbol Qeq_sym [x y] : π (x q= y) → π (y q= x);
-
-symbol Qeq_trans [x y z] : π (x q= y) → π (y q= z) → π (x q= z);
-
-symbol Qden_cancel a b p : π (((Qmake a p) q= (Qmake b p)) ⇒ (a = b));
-
-symbol Qnum_cancel (z : τ int) (a b : τ pos) : π (z ≠ 0) → π (((Qmake z a) q= (Qmake z b)) ⇒ (a = b));
-
-require open aclia.Nat;
-
-constant symbol tup : Set → Set → Set;
-symbol tupe [a b] : τ a → τ b → τ (tup a b);
-symbol π2 [a b] : τ(tup a b) → τ b;
-rule π2 (tupe _ $b) ↪ $b;
-symbol π1 [a b] : τ(tup a b) → τ a;
-
-/*
-Fixpoint divmod x y q u :=
-  match x with
-    | 0 => (q,u)
-    | S x' => match u with
-                | 0 => divmod x' y (S q) y
-                | S u' => divmod x' y q u'
-              end
-  end.
-*/
-symbol divmod (x y q u: τ nat): τ (tup nat nat);
-rule divmod 0 $y $q $u ↪ tupe $q $u
-with divmod ($x +1) $y $q 0 ↪ divmod $x $y ($q + 1) $y
-with divmod ($x +1) $y $q ($u +1) ↪ divmod $x $y $q $u
-;
-
-/*
-Definition modulo x y :=
-  match y with
-    | 0 => x
-    | S y' => y' - snd (divmod x y' 0 y')
-  end.
-*/
-symbol mod (x y: ℕ) : ℕ; notation mod infix 22;
-rule $x mod 0 ↪ $x
-with $x mod ($y +1) ↪ $y - (π2 (divmod $x $y 0 $y))
-;
-
-/*
-Fixpoint gcd a b :=
-  match a with
-   | O => b
-   | S a' => gcd (b mod (S a')) (S a')
-  end.
-*/
-symbol gcd (a b: ℕ) : ℕ;
-rule gcd 0 $b ↪ $b
-with gcd ($a +1) $b ↪ gcd ($b mod ($a + 1)) ($a + 1);
+require open aclia.Nat aclia.Z aclia.Prop;
 
 
 inductive Mask: TYPE ≔
@@ -246,6 +112,7 @@ with Z_gcd (Zneg $a) (Zpos $b) ↪ Zpos (Stein_gcd $a $b)
 with Z_gcd (Zneg $a) (Zneg $b) ↪ Zpos (Stein_gcd $a $b)
 ;
 
+
 // Qc : A canonical representation of rational numbers. based on the setoid representation Q.
 
 // (** A generalized gcd, also computing division of a and b by gcd. *)
@@ -349,6 +216,10 @@ with Zggcd (Zneg $a) (Zneg $b) ↪
 
 compute Zggcd (Zpos (O (O (O (I (I (O (O H)))))))) (Zpos (O (O (I H))));
 
+compute Zggcd (Zpos (aclia.Pos._8)) (Zpos (aclia.Pos._6));
+
+compute Zggcd (Zpos (aclia.Pos._4)) (Zpos (aclia.Pos._8));
+
 // Definition to_pos (z:Z) : positive :=
 //   match z with
 //     | pos p => p
@@ -359,42 +230,3 @@ rule to_pos (Zpos $p) ↪ $p
 with to_pos (Zneg _) ↪ H
 with to_pos Z0 ↪ H
 ;
-
-// Definition Qred (q:Q) :=
-//   let (q1,q2) := q in
-//   let (r1,r2) := snd (Z.ggcd q1 (Zpos q2))
-//   in r1#(Z.to_pos r2).
-protected symbol Qred (q: ℚ) ≔ 
-  let q1 ≔ (Qnum q) in 
-  let q2 ≔ (Qden q) in
-  let r ≔ (Zggcd q1 (Zpos q2)) ₂ in
-   Qmake (r ₁) (to_pos (r ₂));
-
-symbol # (z: ℤ) (p: ℙ): ℚ; notation # infix 5;
-rule $x # $y ↪ Qred (Qmake $x $y);
-
-symbol divide ≔ λ n, λ m, (`∃ p,  m = p aclia.Z.* n);
-
-symbol zggcd ≔ λ n, λ m, ((Zggcd n m) ₂ ₂);
-
-opaque symbol gcd_divide_l: Π (n: τ int) , Π (m: τ int), π (divide (zggcd n m) n) ≔
-begin admit end;
-
-opaque symbol gcd_divide_r: Π (n: τ int) , Π (m: τ int), π (divide (zggcd n m) m) ≔
-begin admit end;
-
-opaque symbol gcd_greatest: Π (n: τ int) , Π (m: τ int), Π (p: τ int), π (divide p n) → π (divide p m) → π (divide p (zggcd n m)) ≔
-begin admit end;
-
-opaque symbol gcd_nonneg: Π (n: τ int) , Π (m: τ int), π (Z0 aclia.Z.≤ (zggcd n m)) ≔
-begin admit end;
-
-symbol q+' : ℚ → ℚ → ℚ ≔ λ p, λ q, Qred (p q+ q);
-notation q+' infix left 20;
-
-symbol q-' : ℚ → ℚ → ℚ ≔ λ p, λ q, Qred (p q- q);
-notation q-' infix left 20;
-
-symbol q*' : ℚ → ℚ → ℚ ≔ λ p, λ q, Qred (p q* q);
-notation q*' infix left 22;
-

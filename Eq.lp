@@ -30,3 +30,9 @@ opaque symbol eq_sym [a] [x y:τ a] : π(x = y) → π(y = x) ≔
 begin
   assume a x y h; symmetry; apply h
 end;
+
+
+opaque symbol eq_trans [a] [x y z:τ a] : π(x = y) → π(y = z) → π(x = z) ≔
+begin
+  assume a x y z h1 h2; rewrite h1; rewrite h2; reflexivity 
+end;

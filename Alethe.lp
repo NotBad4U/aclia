@@ -1497,6 +1497,7 @@ begin
     apply ∃ₑ H1;
     assume x Hpx;
     apply ∃ᵢ x;
+    simplify;
     rewrite left (H x);
     apply Hpx;
   }
@@ -1506,6 +1507,7 @@ begin
     apply ∃ₑ H1;
     assume x Hqx;
     apply ∃ᵢ x;
+    simplify;
     rewrite (H x);
     apply Hqx;
   };
