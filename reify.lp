@@ -75,36 +75,31 @@ x. WARNING: rfy is sequential. */
 
 sequential symbol rfy: τ(list int) → ℤ → τ(grp × list int);
 
+// addition
 rule rfy $l ($x + $y) ↪
-  let x ≔ rfy $l $x in
-    let y ≔ rfy (x ₂) $y in
-      Add (x ₁) (y ₁) ‚ (y ₂)
-with rfy $l (— $x) ↪
-  let x ≔ rfy $l $x in
-  opp (x ₁) ‚ (x ₂)
+  let x ≔ rfy $l $x in let y ≔ rfy (x ₂) $y in Add (x ₁) (y ₁) ‚ (y ₂)
 
+// opposite
+with rfy $l (— $x) ↪ let x ≔ rfy $l $x in opp (x ₁) ‚ (x ₂)
+
+// substraction
 with rfy $l ($x - $y) ↪ rfy $l ($x + — $y)
 
+// constants
 with rfy $l 0 ↪ Cst 0 ‚ $l
 with rfy $l (Zpos $k) ↪ Cst (Zpos $k) ‚ $l
 with rfy $l (Zneg $k) ↪ Cst (Zneg $k) ‚ $l
 
+// multiplication by a constant
 with rfy $l (0 * _) ↪ Cst 0 ‚ $l
-with rfy $l (Zpos $k * $x) ↪
-  let x ≔ rfy $l $x in
-  mul (Zpos $k) (x ₁) ‚ x ₂
-with rfy $l (Zneg $k * $x) ↪
-  let x ≔ rfy $l $x in
-  mul (Zneg $k) (x ₁) ‚ x ₂
-with rfy $l ($x * Zpos $k) ↪
-  let x ≔ rfy $l $x in
-  mul (Zpos $k) (x ₁) ‚ x ₂
-with rfy $l ($x * Zneg $k) ↪
-  let x ≔ rfy $l $x in
-  mul (Zneg $k) (x ₁) ‚ x ₂
+with rfy $l (Zpos $k * $x) ↪ let x ≔ rfy $l $x in mul (Zpos $k) (x ₁) ‚ (x ₂)
+with rfy $l (Zneg $k * $x) ↪ let x ≔ rfy $l $x in mul (Zneg $k) (x ₁) ‚ (x ₂)
+with rfy $l ($x * Zpos $k) ↪ let x ≔ rfy $l $x in mul (Zpos $k) (x ₁) ‚ (x ₂)
+with rfy $l ($x * Zneg $k) ↪ let x ≔ rfy $l $x in mul (Zneg $k) (x ₁) ‚ (x ₂)
 
+// other cases are abstracted by a variable
 with rfy $l $x ↪
-  case (index _0 $x $l) (λ i, Var i 1 ‚ $l) (λ i, Var i 1 ‚ ($l ++ ($x ⸬ □)))
+  case (index _0 $x $l) (λ i, Var i 1 ‚ $l) (λ i, Var i 1 ‚ ($x ⸬ $l))
 ;
 
 symbol reify ≔ rfy □;
